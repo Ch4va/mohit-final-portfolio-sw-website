@@ -27,3 +27,8 @@ yarn-error.log*
 .env.staging
 .env.production
 .env.*.local
+
+# Backup and original images
+assets/profile-photo-original.jpg
+assets/images/
+
