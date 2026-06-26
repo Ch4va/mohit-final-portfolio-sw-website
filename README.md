@@ -1,4 +1,4 @@
-# Mohit — Digital Creator Portfolio Website
+# Mohit — Digital Creator Portfolio Website(SOFTWARE)
 
 A premium, interactive, and modern digital portfolio website built with rich animations, custom interactions, and clean layouts.
 
