@@ -261,38 +261,36 @@
             leadsList.unshift(lead);
             localStorage.setItem('portfolio_leads', JSON.stringify(leadsList));
 
-            // 2. Save to Central Database via Vercel serverless function (bypasses CORS)
+            // 2. Save to Central Database directly (bypasses CORS natively)
             try {
+                const appKey = 'u49pd3f3';
                 const leadId = 'lead_' + Date.now();
                 const leadHex = stringToHex(JSON.stringify(lead));
                 
                 // Write individual lead
-                await fetch('/api/leads', {
+                await fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${appKey}/${leadId}/${leadHex}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'update_value',
-                        key: leadId,
-                        value: leadHex
-                    })
+                    headers: { 'Content-Length': '0' }
                 });
 
                 // Fetch current index of lead IDs
-                let indexResponse = await fetch('/api/leads?action=get_value&key=leads_index');
-                let currentIndexStr = await indexResponse.json();
+                let indexResponse = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${appKey}/leads_index`);
+                let currentIndexStr = await indexResponse.text();
                 
-                let indexList = currentIndexStr ? currentIndexStr.split(',') : [];
+                try {
+                    currentIndexStr = JSON.parse(currentIndexStr);
+                } catch(e) {}
+                
+                let indexList = [];
+                if (currentIndexStr && currentIndexStr !== 'NONE' && currentIndexStr.trim() !== '') {
+                    indexList = currentIndexStr.split(',');
+                }
                 indexList.unshift(leadId);
                 
                 // Write updated index back
-                await fetch('/api/leads', {
+                await fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${appKey}/leads_index/${indexList.join(',')}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'update_value',
-                        key: 'leads_index',
-                        value: indexList.join(',')
-                    })
+                    headers: { 'Content-Length': '0' }
                 });
             } catch (err) {
                 console.error("Failed to write to central database", err);
