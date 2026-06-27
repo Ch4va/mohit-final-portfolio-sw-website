@@ -18,11 +18,13 @@
     color: var(--bg);
 }
 
-body {
+html, body {
     background-color: var(--bg);
     color: var(--text);
     font-family: 'Space Grotesk', sans-serif;
     overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
     cursor: none;
 }
 
