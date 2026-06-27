@@ -306,8 +306,6 @@
         const errorMsg = document.getElementById('error-msg');
         const correctPin = "1306";
 
-        const appKey = 'u49pd3f3';
-
         // Auto-focus input
         document.getElementById('lock-screen').addEventListener('click', () => pinInput.focus());
 
@@ -372,8 +370,8 @@
             tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 3rem; color: var(--light-gray);">Fetching leads from database...</td></tr>`;
 
             try {
-                // Fetch the index of lead keys
-                const indexResponse = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${appKey}/leads_index`);
+                // Fetch the index of lead keys via same-origin API
+                const indexResponse = await fetch('/api/leads?action=get_value&key=leads_index');
                 const indexStr = await indexResponse.json();
                 
                 if (!indexStr) {
@@ -384,11 +382,11 @@
                 const leadKeys = indexStr.split(',');
                 const leads = [];
 
-                // Fetch details of each lead key in parallel
+                // Fetch details of each lead key in parallel via same-origin API
                 await Promise.all(leadKeys.map(async (key) => {
                     if (!key) return;
                     try {
-                        const leadResponse = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${appKey}/${key}`);
+                        const leadResponse = await fetch('/api/leads?action=get_value&key=' + key);
                         const leadHex = await leadResponse.json();
                         if (leadHex) {
                             const lead = JSON.parse(hexToString(leadHex));
@@ -448,10 +446,15 @@
         document.getElementById('clear-btn').addEventListener('click', async () => {
             if (confirm('Are you sure you want to delete all leads? This cannot be undone.')) {
                 try {
-                    // Update index key to empty
-                    await fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${appKey}/leads_index/`, {
+                    // Update index key to empty via same-origin API
+                    await fetch('/api/leads', {
                         method: 'POST',
-                        headers: { 'Content-Length': '0' }
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'update_value',
+                            key: 'leads_index',
+                            value: ''
+                        })
                     });
                 } catch (err) {}
                 
@@ -465,13 +468,13 @@
         document.getElementById('export-btn').addEventListener('click', async () => {
             let leads = [];
             try {
-                const indexResponse = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${appKey}/leads_index`);
+                const indexResponse = await fetch('/api/leads?action=get_value&key=leads_index');
                 const indexStr = await indexResponse.json();
                 if (indexStr) {
                     const leadKeys = indexStr.split(',');
                     await Promise.all(leadKeys.map(async (key) => {
                         if (!key) return;
-                        const leadResponse = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${appKey}/${key}`);
+                        const leadResponse = await fetch('/api/leads?action=get_value&key=' + key);
                         const leadHex = await leadResponse.json();
                         if (leadHex) {
                             leads.push(JSON.parse(hexToString(leadHex)));
