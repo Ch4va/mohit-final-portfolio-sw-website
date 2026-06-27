@@ -17,19 +17,45 @@ module.exports = async (req, res) => {
 
     try {
         if (req.method === 'GET') {
-            const { action, key } = req.query;
+            const { action, key } = req.query || {};
 
             if (action === 'get_value' && key) {
                 const response = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${appKey}/${key}`);
-                const data = await response.json();
-                return res.status(200).json(data);
+                const text = await response.text();
+                
+                // keyvalue.immanuel.co returns JSON-encoded string (wrapped in double quotes).
+                // We parse it safely to return the clean, unquoted value.
+                let val = '';
+                if (text && text.trim()) {
+                    try {
+                        val = JSON.parse(text);
+                    } catch (e) {
+                        val = text; // Fallback if it is not valid JSON
+                    }
+                }
+                return res.status(200).json(val);
             }
             
             return res.status(400).json({ error: 'Invalid action or missing key' });
         }
 
         if (req.method === 'POST') {
-            const { action, key, value } = req.body;
+            // Safely handle body parsing for different Vercel environments (raw string, buffer, or object)
+            let body = req.body;
+            if (body) {
+                if (Buffer.isBuffer(body)) {
+                    body = body.toString('utf8');
+                }
+                if (typeof body === 'string') {
+                    try {
+                        body = JSON.parse(body);
+                    } catch (e) {
+                        console.error("Failed to parse body string:", body);
+                    }
+                }
+            }
+
+            const { action, key, value } = body || {};
 
             if (action === 'update_value' && key) {
                 const val = value || '';
