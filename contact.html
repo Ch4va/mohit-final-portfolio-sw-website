@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start a Project | Mohit - Digital Portfolio</title>
+    <meta name="description" content="Get in touch to collaborate on design and development projects. Submit your project details, email, and phone number to start a project.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    
+    <!-- GSAP for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --text: #ffffff;
+            --accent: #ff3300;
+            --gray: #222222;
+            --light-gray: #888888;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        /* Grain overlay */
+        .grain {
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.02;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--light-gray);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            transition: color 0.3s, transform 0.3s;
+        }
+
+        .back-btn:hover {
+            color: var(--accent);
+            transform: translateX(-5px);
+        }
+
+        .contact-card {
+            background: rgba(20, 20, 20, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 3.5rem 3rem;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text), var(--light-gray));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: var(--light-gray);
+            font-size: 1rem;
+            margin-bottom: 3rem;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--light-gray);
+            margin-bottom: 0.6rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1.1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--gray);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: border-color 0.3s, background-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        textarea.form-input {
+            resize: none;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 1.3rem;
+            background: var(--accent);
+            border: none;
+            border-radius: 100px;
+            color: var(--text);
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.3s, background-color 0.3s;
+            margin-top: 1rem;
+        }
+
+        .submit-btn:hover {
+            background-color: #ff5500;
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 480px) {
+            .contact-card {
+                padding: 2.5rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="grain"></div>
+
+    <div class="container">
+        <a href="index.html" class="back-btn" id="back-to-home-link">
+            ← Back to Home
+        </a>
+
+        <main class="contact-card">
+            <h1 id="contact-heading">Let's build something bold</h1>
+            <p class="subtitle">Tell me about your project, and let's make it a reality. Enter your details below.</p>
+
+            <!-- Formspree form submission directed to user's email -->
+            <form id="project-contact-form" action="https://formspree.io/f/xpwqgrpw" method="POST">
+                <div class="form-group">
+                    <label for="viewer-name">Name</label>
+                    <input type="text" id="viewer-name" name="name" class="form-input" placeholder="Your Name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="viewer-email">Email Address</label>
+                    <input type="email" id="viewer-email" name="email" class="form-input" placeholder="you@example.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="viewer-phone">Phone Number</label>
+                    <input type="tel" id="viewer-phone" name="phone" class="form-input" placeholder="Your Phone Number" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="viewer-message">Project Details</label>
+                    <textarea id="viewer-message" name="message" class="form-input" rows="5" placeholder="What are we building?" required></textarea>
+                </div>
+
+                <!-- Custom submit script to also log locally if wanted, then submit -->
+                <button type="submit" class="submit-btn" id="submit-proposal-btn">Submit Proposal</button>
+            </form>
+        </main>
+    </div>
+
+    <script>
+        // Enter animations using GSAP
+        window.addEventListener('load', () => {
+            gsap.from('.contact-card', {
+                y: 50,
+                opacity: 0,
+                duration: 1,
+                ease: 'power3.out'
+            });
+
+            gsap.from('.back-btn', {
+                x: -20,
+                opacity: 0,
+                duration: 0.8,
+                delay: 0.3,
+                ease: 'power3.out'
+            });
+        });
+
+        // Intercept form submission to save details locally to a dashboard if they visit /leads.html
+        document.getElementById('project-contact-form').addEventListener('submit', function(e) {
+            const name = document.getElementById('viewer-name').value;
+            const email = document.getElementById('viewer-email').value;
+            const phone = document.getElementById('viewer-phone').value;
+            const message = document.getElementById('viewer-message').value;
+            const date = new Date().toLocaleString();
+
+            const lead = { name, email, phone, message, date };
+
+            // Save to localStorage so Mohit can also see them in his local /leads.html dashboard!
+            let leads = JSON.parse(localStorage.getItem('portfolio_leads') || '[]');
+            leads.unshift(lead);
+            localStorage.setItem('portfolio_leads', JSON.stringify(leads));
+        });
+    </script>
+</body>
+</html>
