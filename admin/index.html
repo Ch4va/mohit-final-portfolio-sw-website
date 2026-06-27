@@ -53,7 +53,7 @@
 
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 1280px;
             position: relative;
             z-index: 10;
         }
@@ -262,7 +262,7 @@
                 </div>
                 <input type="password" id="pin-input" maxlength="4" autofocus autocomplete="off">
                 <div class="error-msg" id="error-msg">Incorrect PIN. Access Denied.</div>
-                <p style="font-size: 0.8rem; opacity: 0.5;">Default Admin Code: <strong>1234</strong></p>
+                <p style="font-size: 0.8rem; opacity: 0.5;">Authorized Access Only</p>
             </div>
 
             <!-- Dashboard Screen -->
@@ -304,7 +304,7 @@
             document.getElementById('dot-3')
         ];
         const errorMsg = document.getElementById('error-msg');
-        const correctPin = "1234";
+        const correctPin = "1306";
 
         // KVdb.io endpoint configuration for database storage
         const dbUrl = 'https://kvdb.io/Ch4va_portfolio_leads_v1/leads';
