@@ -232,7 +232,16 @@
         // Intercept form submission to save details locally, to the database, and to Formspree
         const form = document.getElementById('project-contact-form');
         const submitBtn = document.getElementById('submit-proposal-btn');
-        const dbUrl = 'https://kvdb.io/8McqUqamJ9fYjN4FUK3GBo/leads';
+        const appKey = 'u49pd3f3';
+
+        function stringToHex(str) {
+            let hex = '';
+            for (let i = 0; i < str.length; i++) {
+                let code = str.charCodeAt(i).toString(16);
+                hex += (code.length === 1 ? '0' : '') + code;
+            }
+            return hex;
+        }
 
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -253,24 +262,28 @@
             leadsList.unshift(lead);
             localStorage.setItem('portfolio_leads', JSON.stringify(leadsList));
 
-            // 2. Save to Central KVdb.io Database
+            // 2. Save to Central Database
             try {
-                let currentLeads = [];
-                try {
-                    const dbRes = await fetch(dbUrl);
-                    if (dbRes.ok) {
-                        currentLeads = await dbRes.json();
-                    }
-                } catch (dbErr) {
-                    console.log("Database initialized or temporarily offline");
-                }
+                const leadId = 'lead_' + Date.now();
+                const leadHex = stringToHex(JSON.stringify(lead));
                 
-                currentLeads.unshift(lead);
-                
-                await fetch(dbUrl, {
+                // Write individual lead
+                await fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${appKey}/${leadId}/${leadHex}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(currentLeads)
+                    headers: { 'Content-Length': '0' }
+                });
+
+                // Fetch current index of lead IDs
+                let indexResponse = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${appKey}/leads_index`);
+                let currentIndexStr = await indexResponse.json();
+                
+                let indexList = currentIndexStr ? currentIndexStr.split(',') : [];
+                indexList.unshift(leadId);
+                
+                // Write updated index back
+                await fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${appKey}/leads_index/${indexList.join(',')}`, {
+                    method: 'POST',
+                    headers: { 'Content-Length': '0' }
                 });
             } catch (err) {
                 console.error("Failed to write to central database", err);

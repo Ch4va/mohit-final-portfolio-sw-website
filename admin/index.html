@@ -306,11 +306,18 @@
         const errorMsg = document.getElementById('error-msg');
         const correctPin = "1306";
 
-        // KVdb.io endpoint configuration for database storage
-        const dbUrl = 'https://kvdb.io/8McqUqamJ9fYjN4FUK3GBo/leads';
+        const appKey = 'u49pd3f3';
 
         // Auto-focus input
         document.getElementById('lock-screen').addEventListener('click', () => pinInput.focus());
+
+        function hexToString(hex) {
+            let str = '';
+            for (let i = 0; i < hex.length; i += 2) {
+                str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+            }
+            return str;
+        }
 
         pinInput.addEventListener('input', () => {
             const val = pinInput.value;
@@ -365,12 +372,39 @@
             tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 3rem; color: var(--light-gray);">Fetching leads from database...</td></tr>`;
 
             try {
-                const response = await fetch(dbUrl);
-                if (!response.ok) throw new Error('Database empty or offline');
-                const leads = await response.json();
+                // Fetch the index of lead keys
+                const indexResponse = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${appKey}/leads_index`);
+                const indexStr = await indexResponse.json();
+                
+                if (!indexStr) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="empty-state">No leads found in database.</td></tr>`;
+                    return;
+                }
+                
+                const leadKeys = indexStr.split(',');
+                const leads = [];
+
+                // Fetch details of each lead key in parallel
+                await Promise.all(leadKeys.map(async (key) => {
+                    if (!key) return;
+                    try {
+                        const leadResponse = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${appKey}/${key}`);
+                        const leadHex = await leadResponse.json();
+                        if (leadHex) {
+                            const lead = JSON.parse(hexToString(leadHex));
+                            leads.push(lead);
+                        }
+                    } catch (e) {
+                        console.error(`Failed to fetch lead: ${key}`, e);
+                    }
+                }));
+
+                // Sort leads by date descending (newest first)
+                leads.sort((a, b) => new Date(b.date) - new Date(a.date));
+
                 renderLeads(leads);
             } catch (err) {
-                // Fallback to localStorage
+                console.error("Failed to load leads from database, falling back to local storage...", err);
                 const localLeads = JSON.parse(localStorage.getItem('portfolio_leads') || '[]');
                 renderLeads(localLeads);
             }
@@ -414,11 +448,10 @@
         document.getElementById('clear-btn').addEventListener('click', async () => {
             if (confirm('Are you sure you want to delete all leads? This cannot be undone.')) {
                 try {
-                    // Update server db
-                    await fetch(dbUrl, {
+                    // Update index key to empty
+                    await fetch(`https://keyvalue.immanuel.co/api/KeyVal/UpdateValue/${appKey}/leads_index/`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify([])
+                        headers: { 'Content-Length': '0' }
                     });
                 } catch (err) {}
                 
@@ -432,8 +465,20 @@
         document.getElementById('export-btn').addEventListener('click', async () => {
             let leads = [];
             try {
-                const res = await fetch(dbUrl);
-                leads = await res.json();
+                const indexResponse = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${appKey}/leads_index`);
+                const indexStr = await indexResponse.json();
+                if (indexStr) {
+                    const leadKeys = indexStr.split(',');
+                    await Promise.all(leadKeys.map(async (key) => {
+                        if (!key) return;
+                        const leadResponse = await fetch(`https://keyvalue.immanuel.co/api/KeyVal/GetValue/${appKey}/${key}`);
+                        const leadHex = await leadResponse.json();
+                        if (leadHex) {
+                            leads.push(JSON.parse(hexToString(leadHex)));
+                        }
+                    }));
+                    leads.sort((a, b) => new Date(b.date) - new Date(a.date));
+                }
             } catch (err) {
                 leads = JSON.parse(localStorage.getItem('portfolio_leads') || '[]');
             }
