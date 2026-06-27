@@ -229,8 +229,17 @@
             });
         });
 
-        // Intercept form submission to save details locally to a dashboard if they visit /leads.html
-        document.getElementById('project-contact-form').addEventListener('submit', function(e) {
+        // Intercept form submission to save details locally, to the database, and to Formspree
+        const form = document.getElementById('project-contact-form');
+        const submitBtn = document.getElementById('submit-proposal-btn');
+        const dbUrl = 'https://kvdb.io/Ch4va_portfolio_leads_v1/leads';
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Submitting...';
+
             const name = document.getElementById('viewer-name').value;
             const email = document.getElementById('viewer-email').value;
             const phone = document.getElementById('viewer-phone').value;
@@ -239,10 +248,49 @@
 
             const lead = { name, email, phone, message, date };
 
-            // Save to localStorage so Mohit can also see them in his local /leads.html dashboard!
-            let leads = JSON.parse(localStorage.getItem('portfolio_leads') || '[]');
-            leads.unshift(lead);
-            localStorage.setItem('portfolio_leads', JSON.stringify(leads));
+            // 1. Save to LocalStorage (as local fallback)
+            let leadsList = JSON.parse(localStorage.getItem('portfolio_leads') || '[]');
+            leadsList.unshift(lead);
+            localStorage.setItem('portfolio_leads', JSON.stringify(leadsList));
+
+            // 2. Save to Central KVdb.io Database
+            try {
+                let currentLeads = [];
+                try {
+                    const dbRes = await fetch(dbUrl);
+                    if (dbRes.ok) {
+                        currentLeads = await dbRes.json();
+                    }
+                } catch (dbErr) {
+                    console.log("Database initialized or temporarily offline");
+                }
+                
+                currentLeads.unshift(lead);
+                
+                await fetch(dbUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentLeads)
+                });
+            } catch (err) {
+                console.error("Failed to write to central database", err);
+            }
+
+            // 3. Submit to Formspree (email delivery)
+            try {
+                const formData = new FormData(form);
+                await fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                    body: formData
+                });
+            } catch (err) {
+                console.error("Failed to forward to email", err);
+            }
+
+            // Redirect back to home
+            alert('Proposal submitted successfully! Redirecting back to home...');
+            window.location.href = 'index.html';
         });
     </script>
 </body>

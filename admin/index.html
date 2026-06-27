@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Leads Dashboard | Mohit Portfolio</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    
+    <!-- GSAP for smooth transitions -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #050505;
+            --card-bg: rgba(20, 20, 20, 0.6);
+            --text: #ffffff;
+            --accent: #ff3300;
+            --gray: #222222;
+            --light-gray: #888888;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            overflow-x: hidden;
+        }
+
+        /* Grain overlay */
+        .grain {
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.02;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--light-gray);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            transition: color 0.3s, transform 0.3s;
+        }
+
+        .back-btn:hover {
+            color: var(--accent);
+            transform: translateX(-5px);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            padding: 3.5rem 3rem;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--text), var(--light-gray));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Lock Screen PIN styles */
+        .pin-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+        }
+
+        .pin-screen p {
+            color: var(--light-gray);
+            margin-bottom: 2rem;
+        }
+
+        .pin-dots {
+            display: flex;
+            gap: 1.2rem;
+            margin-bottom: 2rem;
+        }
+
+        .pin-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid var(--light-gray);
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+
+        .pin-dot.filled {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        #pin-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .error-msg {
+            color: var(--accent);
+            font-size: 0.9rem;
+            min-height: 1.5rem;
+            margin-bottom: 1rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        /* Dashboard Screen */
+        .dashboard-screen {
+            display: none;
+            text-align: left;
+        }
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        th, td {
+            padding: 1.2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--light-gray);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .empty-state {
+            padding: 4rem 2rem;
+            text-align: center;
+            color: var(--light-gray);
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            border-radius: 100px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--text);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #ff5500;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--accent);
+            border: 2px solid var(--accent);
+        }
+
+        .btn-secondary:hover {
+            background: var(--accent);
+            color: var(--text);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 2.5rem 1.5rem;
+            }
+            .actions {
+                flex-direction: column;
+            }
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="grain"></div>
+
+    <div class="container">
+        <a href="../index.html" class="back-btn">
+            ← Back to Home
+        </a>
+
+        <main class="card">
+            <!-- Lock Screen -->
+            <div id="lock-screen" class="pin-screen">
+                <h1 id="panel-title">Enter Admin PIN</h1>
+                <p>Access is restricted. Please enter your 4-digit code.</p>
+                <div class="pin-dots">
+                    <div class="pin-dot" id="dot-0"></div>
+                    <div class="pin-dot" id="dot-1"></div>
+                    <div class="pin-dot" id="dot-2"></div>
+                    <div class="pin-dot" id="dot-3"></div>
+                </div>
+                <input type="password" id="pin-input" maxlength="4" autofocus autocomplete="off">
+                <div class="error-msg" id="error-msg">Incorrect PIN. Access Denied.</div>
+                <p style="font-size: 0.8rem; opacity: 0.5;">Default Admin Code: <strong>1234</strong></p>
+            </div>
+
+            <!-- Dashboard Screen -->
+            <div id="dashboard-screen" class="dashboard-screen">
+                <h1>Leads Database</h1>
+                <p style="color: var(--light-gray); margin-bottom: 2.5rem;">Below is the live list of client inquiries and leads submitted via your contact form.</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Message</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <!-- Dynamic Content -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-secondary" id="clear-btn">Clear Database</button>
+                    <button class="btn btn-primary" id="export-btn">Export to CSV</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const pinInput = document.getElementById('pin-input');
+        const dots = [
+            document.getElementById('dot-0'),
+            document.getElementById('dot-1'),
+            document.getElementById('dot-2'),
+            document.getElementById('dot-3')
+        ];
+        const errorMsg = document.getElementById('error-msg');
+        const correctPin = "1234";
+
+        // KVdb.io endpoint configuration for database storage
+        const dbUrl = 'https://kvdb.io/Ch4va_portfolio_leads_v1/leads';
+
+        // Auto-focus input
+        document.getElementById('lock-screen').addEventListener('click', () => pinInput.focus());
+
+        pinInput.addEventListener('input', () => {
+            const val = pinInput.value;
+            
+            // Update dots
+            dots.forEach((dot, idx) => {
+                if (idx < val.length) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+
+            // Check PIN
+            if (val.length === 4) {
+                if (val === correctPin) {
+                    unlockDashboard();
+                } else {
+                    showError();
+                }
+            }
+        });
+
+        function showError() {
+            errorMsg.style.opacity = '1';
+            pinInput.value = '';
+            setTimeout(() => {
+                dots.forEach(dot => dot.classList.remove('filled'));
+            }, 300);
+        }
+
+        function unlockDashboard() {
+            gsap.to('#lock-screen', {
+                opacity: 0,
+                y: -20,
+                duration: 0.5,
+                onComplete: () => {
+                    document.getElementById('lock-screen').style.display = 'none';
+                    document.getElementById('dashboard-screen').style.display = 'block';
+                    gsap.from('#dashboard-screen', {
+                        opacity: 0,
+                        y: 20,
+                        duration: 0.5
+                    });
+                    loadLeads();
+                }
+            });
+        }
+
+        async function loadLeads() {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 3rem; color: var(--light-gray);">Fetching leads from database...</td></tr>`;
+
+            try {
+                const response = await fetch(dbUrl);
+                if (!response.ok) throw new Error('Database empty or offline');
+                const leads = await response.json();
+                renderLeads(leads);
+            } catch (err) {
+                // Fallback to localStorage
+                const localLeads = JSON.parse(localStorage.getItem('portfolio_leads') || '[]');
+                renderLeads(localLeads);
+            }
+        }
+
+        function renderLeads(leads) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            if (!leads || leads.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="empty-state">No leads found in database.</td></tr>`;
+                return;
+            }
+
+            leads.forEach(lead => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 600;">${escapeHTML(lead.name)}</td>
+                    <td><a href="mailto:${escapeHTML(lead.email)}" style="color: var(--accent); text-decoration: none;">${escapeHTML(lead.email)}</a></td>
+                    <td><a href="tel:${escapeHTML(lead.phone)}" style="color: var(--text); text-decoration: none;">${escapeHTML(lead.phone)}</a></td>
+                    <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHTML(lead.message)}">${escapeHTML(lead.message)}</td>
+                    <td style="font-size: 0.8rem; color: var(--light-gray);">${lead.date}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+
+        // Clear Database
+        document.getElementById('clear-btn').addEventListener('click', async () => {
+            if (confirm('Are you sure you want to delete all leads? This cannot be undone.')) {
+                try {
+                    // Update server db
+                    await fetch(dbUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify([])
+                    });
+                } catch (err) {}
+                
+                // Clear local storage too
+                localStorage.removeItem('portfolio_leads');
+                renderLeads([]);
+            }
+        });
+
+        // Export to CSV
+        document.getElementById('export-btn').addEventListener('click', async () => {
+            let leads = [];
+            try {
+                const res = await fetch(dbUrl);
+                leads = await res.json();
+            } catch (err) {
+                leads = JSON.parse(localStorage.getItem('portfolio_leads') || '[]');
+            }
+
+            if (leads.length === 0) {
+                alert('No leads to export.');
+                return;
+            }
+
+            let csv = "Name,Email,Phone,Message,Date\n";
+            leads.forEach(l => {
+                csv += `"${l.name.replace(/"/g, '""')}"` + "," + 
+                       `"${l.email.replace(/"/g, '""')}"` + "," + 
+                       `"${l.phone.replace(/"/g, '""')}"` + "," + 
+                       `"${l.message.replace(/"/g, '""')}"` + "," + 
+                       `"${l.date}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", "mohit_portfolio_leads.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    </script>
+</body>
+</html>
