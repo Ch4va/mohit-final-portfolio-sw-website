@@ -26,6 +26,14 @@ body {
     cursor: none;
 }
 
+input, textarea, select {
+    cursor: text !important;
+}
+
+a, button, [role="button"] {
+    cursor: pointer !important;
+}
+
 /* Custom Cursor */
 .cursor {
     width: 20px;
